@@ -52,6 +52,6 @@ while [ "$current" -le "$total_passos" ]; do
     current=$((current + 1))
 done
 
-dunstify -u critical "Temporizador" "$mensagem finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
+dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
 
