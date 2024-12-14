@@ -5,10 +5,25 @@ USAGE=$(cat <<'EOF'
  / __// // __ `__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
+v1.2
 EOF
 )
 echo -e "$USAGE"
-read -p "Defina o tempo do temporizador (ex: 10s, 5m, 1h) [10s]: " tempo
+tempo="$1"
+
+function _saida(){
+  local input="$1"
+  if [[ "$input" =~ [Qq]$ ]]; then
+    echo "Saindo.."
+    exit 0
+  fi
+}
+
+if [[ -z $1 ]]; then
+    read -rp "Defina o temporizador (ex: 10s, 5m, 1h) [10s]: " tempo
+fi
+
+_saida "$tempo"
 tempo=${tempo:-10s} 
 
 if [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
@@ -23,7 +38,11 @@ else
     exit 1
 fi
 
-read -p "Digite a mensagem para exibir ao final do temporizador: " mensagem
+mensagem="${*:2}"
+if [[ -z "$mensagem" ]]; then
+read -rp "Digite a mensagem para exibir ao final do temporizador: " mensagem
+fi
+_saida "$mensagem"
 [[ -z "$mensagem" ]] && mensagem="em execução"
 
 echo "Iniciando temporizador $mensagem por $tempo..."
@@ -52,4 +71,3 @@ done
 
 dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
-
