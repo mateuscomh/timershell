@@ -1,11 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
+#----------------------------------------------------|
+#  Matheus Martins 3mhenrique@gmail.com
+#  https://github.com/mateuscomh/yoURL
+#  14/12/2024 GPL3
+#  Shell GUI timer regressivo com notificação
+#  Deps: dunstfy, paplay, timer(https://github.com/caarlos0/timer)
+#----------------------------------------------------|
+
 USAGE=$(cat <<'EOF'
    __   _                        _____  __           __ __
   / /_ (_)____ ___   ___   _____/ ___/ / /_   ___   / // /
  / __// // __ `__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v1.2
+v1.2.1
 EOF
 )
 echo -e "$USAGE"
