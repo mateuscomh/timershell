@@ -15,7 +15,7 @@ USAGE=$(
  / __// // __ `__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v1.2.1
+v1.2.2
 EOF
 )
 echo -e "$USAGE"
@@ -83,4 +83,5 @@ while [ "$current" -le "$total_passos" ]; do
 done
 
 dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
+echo  "Temporizador $mensagem finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
