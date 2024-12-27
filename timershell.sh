@@ -5,7 +5,7 @@
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
 #  Shell GUI timer regressivo com notificação
-#  Deps: dunstfy, paplay, timer(https://github.com/caarlos0/timer)
+#  Deps: dunstify, paplay, timer(https://github.com/caarlos0/timer)
 #----------------------------------------------------|
 
 USAGE=$(
@@ -15,7 +15,7 @@ USAGE=$(
  / __// // __ `__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v1.2.2
+v1.3.1
 EOF
 )
 echo -e "$USAGE"
@@ -30,13 +30,24 @@ function _saida() {
 }
 
 if [[ -z $1 ]]; then
-	read -rp "Defina o temporizador (ex: 10s, 5m, 1h) [10s]: " tempo
+	read -rp "Defina o temporizador (ex: 10s, 5m, 1h ou hh:mm) [10s]: " tempo
 fi
 
 _saida "$tempo"
 tempo=${tempo:-10s}
 
-if [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
+# Verificação do formato de hora
+if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
+	echo "Calculando tempo até $tempo..."
+	current_time=$(date +%s)
+	target_time=$(date -d "$(date +%Y-%m-%d) $tempo" +%s)
+# Adiciona 1 dia se o horário é do dia seguinte
+	if (( target_time < current_time )); then
+		target_time=$((target_time + 86400))  
+	fi
+	segundos_total=$((target_time - current_time))
+	echo "Tempo restante: $segundos_total segundos."
+elif [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
 	case ${tempo: -1} in
 	s) segundos_total=${tempo%?} ;;
 	m) segundos_total=$((${tempo%?} * 60)) ;;
@@ -47,7 +58,7 @@ if [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
 		;;
 	esac
 else
-	echo "Formato de tempo inválido. Use o formato 10s, 5m ou 1h."
+	echo "Formato de tempo inválido. Use o formato 10s, 5m, 1h ou hh:mm."
 	exit 1
 fi
 
@@ -58,9 +69,9 @@ fi
 _saida "$mensagem"
 [[ -z "$mensagem" ]] && mensagem="em execução"
 
-echo "Iniciando temporizador $mensagem por $tempo..."
+echo "Iniciando temporizador $mensagem por $segundos_total segundos..."
 
-bash -c "timer $tempo" &
+bash -c "timer ${segundos_total}s" &
 
 intervalo=1
 total_passos=$((segundos_total / intervalo))
@@ -77,7 +88,7 @@ while [ "$current" -le "$total_passos" ]; do
 		-h int:value:"$progresso" \
 		-h 'string:hlcolor:#ff4444' \
 		-h string:x-dunst-stack-tag:temporizador \
-		--timeout=1010 "Temporizador $mensagem..." "Faltam $temporizador segundos"
+		--timeout=1010 "Temporizador $mensagem..." "$temporizador"
 	sleep "$intervalo"
 	current=$((current + 1))
 done
@@ -85,3 +96,4 @@ done
 dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
 echo  "Temporizador $mensagem finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
+
