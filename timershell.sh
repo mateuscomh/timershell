@@ -41,9 +41,9 @@ if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
 	echo "Calculando tempo até $tempo..."
 	current_time=$(date +%s)
 	target_time=$(date -d "$(date +%Y-%m-%d) $tempo" +%s)
-# Adiciona 1 dia se o horário é do dia seguinte
-	if (( target_time < current_time )); then
-		target_time=$((target_time + 86400))  
+	# Adiciona 1 dia se o horário é do dia seguinte
+	if ((target_time < current_time)); then
+		target_time=$((target_time + 86400))
 	fi
 	segundos_total=$((target_time - current_time))
 	echo "Tempo restante: $segundos_total segundos."
@@ -94,6 +94,5 @@ while [ "$current" -le "$total_passos" ]; do
 done
 
 dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
-echo  "Temporizador $mensagem finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "Temporizador $mensagem finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
-
