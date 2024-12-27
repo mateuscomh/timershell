@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
+#  Timershell v1.4.1
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
@@ -15,7 +16,7 @@ USAGE=$(
  / __// // __ `__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v1.3.1
+v1.4.1
 EOF
 )
 echo -e "$USAGE"
@@ -32,6 +33,7 @@ function _saida() {
 if [[ -z $1 ]]; then
 	read -rp "Defina o temporizador (ex: 10s, 5m, 1h ou hh:mm) [10s]: " tempo
 fi
+
 
 _saida "$tempo"
 tempo=${tempo:-10s}
@@ -72,25 +74,42 @@ _saida "$mensagem"
 echo "Iniciando temporizador $mensagem por $segundos_total segundos..."
 
 bash -c "timer ${segundos_total}s" &
-
+PID=$!
 intervalo=1
 total_passos=$((segundos_total / intervalo))
 current=0
 
 while [ "$current" -le "$total_passos" ]; do
-	progresso=$((current * 100 / total_passos))
-	tempo_restante=$((segundos_total - current * intervalo))
-	minutos=$((tempo_restante / 60))
-	segundos=$((tempo_restante % 60))
+    if ! kill -0 "$PID" 2>/dev/null; then
+        echo "TimerShell $tempo interrompido, restavam: $temporizador"
+        dunstify -u critical "Temporizador $mensagem" "cancelado às: $(date '+%Y-%m-%d %H:%M:%S')" 
+        exit 127
+    fi
 
-	temporizador="Faltam $minutos minuto(s) e $segundos segundo(s)"
-	dunstify --icon preferences-desktop-screensaver \
-		-h int:value:"$progresso" \
-		-h 'string:hlcolor:#ff4444' \
-		-h string:x-dunst-stack-tag:temporizador \
-		--timeout=1010 "Temporizador $mensagem..." "$temporizador"
-	sleep "$intervalo"
-	current=$((current + 1))
+    progresso=$((current * 100 / total_passos))
+    tempo_restante=$((segundos_total - current * intervalo))
+
+    horas=$((tempo_restante / 3600))
+    minutos=$(((tempo_restante % 3600) / 60))
+    segundos=$((tempo_restante % 60))
+
+    if ((horas > 0)); then
+        temporizador="$horas hora(s), $minutos minuto(s) e $segundos segundo(s)"
+    elif ((minutos > 0)); then
+        temporizador="$minutos minuto(s) e $segundos segundo(s)"
+    else
+        temporizador="$segundos segundo(s)"
+    fi
+
+    # Enviar a notificação
+    dunstify --icon preferences-desktop-screensaver \
+        -h int:value:"$progresso" \
+        -h 'string:hlcolor:#ff4444' \
+        -h string:x-dunst-stack-tag:temporizador \
+        --timeout=1010 "Temporizador $mensagem..." "Faltam $temporizador"
+
+    sleep "$intervalo"
+    current=$((current + 1))
 done
 
 dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%Y-%m-%d %H:%M:%S')"
