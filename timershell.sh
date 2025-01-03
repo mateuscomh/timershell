@@ -102,13 +102,13 @@ while [ "$current" -le "$total_passos" ]; do
 	if ! kill -0 "$PID" 2>/dev/null && [ "$current" -ne "$total_passos" ]; then
 		echo "TimerShell $tempo interrompido, restavam: $temporizador"
 		echo "$(date '+%H:%M:%S +%d-%m-%Y')"
-		dunstify -u critical "Temporizador $mensagem" "cancelado às: $(date '+%H:%M:%S +%d-%m-%Y')"
+		dunstify -u critical "Temporizador $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
 		exit 127
 	fi
 	sleep "$intervalo"
 	current=$((current + 1))
 done
 
-dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%H:%M:%S +%d-%m-%Y')"
-echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S +%d-%m-%Y')"
+dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
