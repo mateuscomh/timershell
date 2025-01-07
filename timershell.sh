@@ -72,7 +72,7 @@ fi
 
 echo "Iniciando temporizador $mensagem por $segundos_total segundos..."
 
-bash -c "timer ${segundos_total}s" &
+bash -c "timer ${segundos_total}" &
 PID=$!
 intervalo=1
 total_passos=$((segundos_total / intervalo))
@@ -97,14 +97,21 @@ while [ "$current" -le "$total_passos" ]; do
 		-h int:value:"$progresso" \
 		-h 'string:hlcolor:#ff4444' -u low \
 		-h string:x-dunst-stack-tag:temporizador \
-		--timeout=1010 "Temporizador $mensagem..." "Faltam $temporizador"
+		--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
 
-	if ! kill -0 "$PID" 2>/dev/null && [ "$current" -ne "$total_passos" ]; then
-		echo "TimerShell $tempo interrompido, restavam: $temporizador"
-		echo "$(date '+%H:%M:%S +%d-%m-%Y')"
-		dunstify -u critical "Temporizador $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
-		exit 127
+	if [ "$current" -ne "$total_passos" ]; then
+		if ! kill -0 "$PID" 2>/dev/null; then
+			wait "$PID"
+			exit_status=$?
+			if [ "$exit_status" -ne 0 ]; then
+				echo "TimerShell $tempo interrompido, restavam: $temporizador"
+				date '+%H:%M:%S +%d-%m-%Y'
+				dunstify -u critical "Temporizador $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
+				exit 127
+			fi
+		fi
 	fi
+
 	sleep "$intervalo"
 	current=$((current + 1))
 done
