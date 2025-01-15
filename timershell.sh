@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v1.4.1
+#  Timershell v1.4.3
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
@@ -41,10 +41,12 @@ tempo=${tempo:-10s}
 if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
 	echo "Calculando tempo até $tempo..."
 	current_time=$(date +%s)
-	target_time=$(date -d "$(date +%Y-%m-%d) $tempo" +%s)
+	# Extrai horas e minutos do input
+	IFS=: read -r hora minuto <<<"$tempo"
+	target_time=$(date -d "today $hora hours $minuto minutes" +%s)
 	# Adiciona 1 dia se o horário é do dia seguinte
 	if ((target_time < current_time)); then
-		target_time=$((target_time + 86400))
+		target_time=$(date -d "tomorrow $hora hours $minuto minutes" +%s)
 	fi
 	segundos_total=$((target_time - current_time))
 	echo "Tempo restante: $segundos_total segundos."
@@ -106,7 +108,7 @@ while [ "$current" -le "$total_passos" ]; do
 			if [ "$exit_status" -ne 0 ]; then
 				echo "TimerShell $tempo interrompido, restavam: $temporizador"
 				date '+%H:%M:%S +%d-%m-%Y'
-				dunstify -u critical "Temporizador $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
+				dunstify -u normal "Temporizador de $tempo $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
 				exit 127
 			fi
 		fi
@@ -116,6 +118,6 @@ while [ "$current" -le "$total_passos" ]; do
 	current=$((current + 1))
 done
 
-dunstify -u critical "Temporizador $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
