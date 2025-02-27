@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v1.6.1
+#  Timershell v2.0.1
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
 #  Shell GUI timer regressivo com notificação
-#  Deps: dunstify, paplay, timer(https://github.com/caarlos0/timer)
+#  Deps: Linux (dunstify, paplay),timer(https://github.com/caarlos0/timer)
+#  Deps: Mac osascript, afplay, timer(https://github.com/caarlos0/timer)
 #----------------------------------------------------|
 
 USAGE=$(
 	cat <<'EOF'
    __   _                        _____  __           __ __
   / /_ (_)____ ___   ___   _____/ ___/ / /_   ___   / // /
- / __// // __ `__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
+ / __// // __ '__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v1.6.1
+v2.0.1
 EOF
 )
 echo -e "$USAGE"
@@ -30,7 +31,20 @@ function _saida() {
 	fi
 }
 
-deps=("dunstify" "paplay" "timer")
+if [[ "$(uname)" == "Darwin" ]]; then
+	OS="macOS"
+elif [[ "$(uname)" == "Linux" ]]; then
+	OS="Linux"
+else
+	echo "Sistema operacional não suportado."
+	exit 1
+fi
+
+if [[ "$OS" == "macOS" ]]; then
+	deps=("osascript" "afplay" "timer")
+elif [[ "$OS" == "Linux" ]]; then
+	deps=("dunstify" "paplay" "timer")
+fi
 
 _check_dep() {
 	if ! command -v "$1" &>/dev/null; then
@@ -55,7 +69,11 @@ if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
 	echo "Calculando tempo até $tempo..."
 	current_time=$(date +%s)
 	IFS=: read -r hora minuto <<<"$tempo"
-	target_time=$(date -d "today $hora:$minuto" +%s)
+	if [[ "$OS" == "macOS" ]]; then
+		target_time=$(date -j -f "%H:%M" "$tempo" +%s)
+	else
+		target_time=$(date -d "today $hora:$minuto" +%s)
+	fi
 	if ((target_time < current_time)); then
 		target_time=$((target_time + 86400))
 	fi
@@ -107,11 +125,15 @@ while [ "$current" -le "$total_passos" ]; do
 		temporizador="$segundos segundo(s)"
 	fi
 
-	dunstify --icon preferences-desktop-screensaver \
-		-h int:value:"$progresso" \
-		-h 'string:hlcolor:#ff4444' -u low \
-		-h string:x-dunst-stack-tag:temporizador \
-		--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
+	if [[ "$OS" == "macOS" ]]; then
+		osascript -e "display notification \"Faltam $temporizador\" with title \"Temporizador $mensagem...\""
+	elif [[ "$OS" == "Linux" ]]; then
+		dunstify --icon preferences-desktop-screensaver \
+			-h int:value:"$progresso" \
+			-h 'string:hlcolor:#ff4444' -u low \
+			-h string:x-dunst-stack-tag:temporizador \
+			--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
+	fi
 
 	if [ "$current" -ne "$total_passos" ]; then
 		if ! kill -0 "$PID" 2>/dev/null; then
@@ -120,7 +142,11 @@ while [ "$current" -le "$total_passos" ]; do
 			if [ "$exit_status" -ne 0 ]; then
 				echo "TimerShell $tempo interrompido, restavam: $temporizador"
 				date '+%H:%M:%S +%d-%m-%Y'
-				dunstify -u normal "Temporizador de $tempo $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
+				if [[ "$OS" == "macOS" ]]; then
+					osascript -e "display notification \"Cancelado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
+				elif [[ "$OS" == "Linux" ]]; then
+					dunstify -u normal "Temporizador de $tempo $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
+				fi
 				exit 127
 			fi
 		fi
@@ -130,6 +156,12 @@ while [ "$current" -le "$total_passos" ]; do
 	current=$((current + 1))
 done
 
-dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
-paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
+
+if [[ "$OS" == "macOS" ]]; then
+	osascript -e "display notification \"Finalizado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
+	seq 3 | xargs -I {} afplay /System/Library/Sounds/Ping.aiff
+elif [[ "$OS" == "Linux" ]]; then
+	dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+	paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
+fi
