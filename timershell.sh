@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v2.0.1
+#  Timershell v2.1.1
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
@@ -58,29 +58,38 @@ for dep in "${deps[@]}"; do
 done
 
 if [[ -z $1 ]]; then
-	read -rp "Defina o temporizador (ex: 10s, 5m, 1h ou hh:mm) [10s]: " tempo
+	echo "Defina o temporizador ou [qQ] para sair"
+	echo "(ex: 5m, 1h ou 2:30h para timer regressivo)"
+	echo "(HH:MM para temporizado hora específica até 23:59)"
+	read -rp " " tempo
 fi
 
 _saida "$tempo"
 tempo=${tempo:-10s}
 
-# Verificação do formato de hora
+# Verificação do formato de tempo
 if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
+	# Formato hh:mm (horário específico)
 	echo "Calculando tempo até $tempo..."
 	current_time=$(date +%s)
 	IFS=: read -r hora minuto <<<"$tempo"
 	if [[ "$OS" == "macOS" ]]; then
 		target_time=$(date -j -f "%H:%M" "$tempo" +%s)
 	else
-		target_time=$(date -d "today $hora:$minuto" +%s)
+		target_time=$(date -d "$hora:$minuto" +%s)
 	fi
 	if ((target_time < current_time)); then
-		target_time=$((target_time + 86400))
+		target_time=$((target_time + 86400)) # Adiciona 1 dia se o horário já passou
 	fi
-	# Calcula o tempo restante em segundos
 	segundos_total=$((target_time - current_time))
 	echo "Tempo restante: $segundos_total segundos."
+elif [[ "$tempo" =~ ^([0-9]+):([0-5][0-9])h$ ]]; then
+	# Formato hh:mmh (intervalo de tempo)
+	IFS=: read -r horas minutos <<<"${tempo%h}"
+	segundos_total=$((horas * 3600 + minutos * 60))
+	echo "Iniciando temporizador de $horas horas e $minutos minutos..."
 elif [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
+	# Formato tradicional (10s, 5m, 1h)
 	case ${tempo: -1} in
 	s) segundos_total=${tempo%?} ;;
 	m) segundos_total=$((${tempo%?} * 60)) ;;
@@ -91,7 +100,7 @@ elif [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
 		;;
 	esac
 else
-	echo "Formato de tempo inválido. Use o formato 10s, 5m, 1h ou hh:mm."
+	echo "Formato de tempo inválido. Use o formato 10s, 5m, 1h, 02:30 ou 02:30h."
 	exit 1
 fi
 
