@@ -115,7 +115,7 @@ echo "Iniciando temporizador $mensagem por $segundos_total segundos..."
 
 bash -c "timer ${segundos_total}" &
 PID=$!
-intervalo="0.9"
+intervalo="0.8"
 start_time=$(date +%s) # Captura o tempo inicial em segundos
 
 while true; do
