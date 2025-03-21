@@ -167,7 +167,7 @@ while true; do
 			--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
 	fi
 
-	sleep "$intervalo" 
+	sleep "$intervalo"
 done
 
 echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
