@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v2.1.1
+#  Timershell v2.2.1
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
@@ -17,7 +17,7 @@ USAGE=$(
  / __// // __ '__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v2.0.1
+v2.2.1
 EOF
 )
 echo -e "$USAGE"
@@ -115,13 +115,19 @@ echo "Iniciando temporizador $mensagem por $segundos_total segundos..."
 
 bash -c "timer ${segundos_total}" &
 PID=$!
-intervalo=1
-total_passos=$((segundos_total / intervalo))
-current=0
+intervalo="0.9"
+start_time=$(date +%s) # Captura o tempo inicial em segundos
 
-while [ "$current" -le "$total_passos" ]; do
-	progresso=$((current * 100 / total_passos))
-	tempo_restante=$((segundos_total - current * intervalo))
+while true; do
+	current_time=$(date +%s)                          # Captura o tempo atual em segundos
+	elapsed_time=$((current_time - start_time))       # Calcula o tempo decorrido
+	tempo_restante=$((segundos_total - elapsed_time)) # Calcula o tempo restante
+
+	if ((tempo_restante <= 0)); then
+		break # Sai do loop quando o tempo acabar
+	fi
+
+	# Converte o tempo restante para horas, minutos e segundos
 	horas=$((tempo_restante / 3600))
 	minutos=$(((tempo_restante % 3600) / 60))
 	segundos=$((tempo_restante % 60))
@@ -134,35 +140,34 @@ while [ "$current" -le "$total_passos" ]; do
 		temporizador="$segundos segundo(s)"
 	fi
 
+	# Verifica se o timer ainda está em execução
+	if ! kill -0 "$PID" 2>/dev/null; then
+		wait "$PID"
+		exit_status=$?
+		if [ "$exit_status" -ne 0 ]; then
+			echo "TimerShell $tempo interrompido, restavam: $temporizador"
+			date '+%H:%M:%S +%d-%m-%Y'
+			if [[ "$OS" == "macOS" ]]; then
+				osascript -e "display notification \"Cancelado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
+			elif [[ "$OS" == "Linux" ]]; then
+				dunstify -u normal "Temporizador de $tempo $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
+			fi
+			exit 127
+		fi
+	fi
+
+	# Exibir notificação
 	if [[ "$OS" == "macOS" ]]; then
 		osascript -e "display notification \"Faltam $temporizador\" with title \"Temporizador $mensagem...\""
 	elif [[ "$OS" == "Linux" ]]; then
 		dunstify --icon preferences-desktop-screensaver \
-			-h int:value:"$progresso" \
+			-h int:value:"$((elapsed_time * 100 / segundos_total))" \
 			-h 'string:hlcolor:#ff4444' -u low \
 			-h string:x-dunst-stack-tag:temporizador \
 			--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
 	fi
 
-	if [ "$current" -ne "$total_passos" ]; then
-		if ! kill -0 "$PID" 2>/dev/null; then
-			wait "$PID"
-			exit_status=$?
-			if [ "$exit_status" -ne 0 ]; then
-				echo "TimerShell $tempo interrompido, restavam: $temporizador"
-				date '+%H:%M:%S +%d-%m-%Y'
-				if [[ "$OS" == "macOS" ]]; then
-					osascript -e "display notification \"Cancelado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
-				elif [[ "$OS" == "Linux" ]]; then
-					dunstify -u normal "Temporizador de $tempo $mensagem" "cancelado às: $(date '+%H:%M:%S %d/%m/%Y')"
-				fi
-				exit 127
-			fi
-		fi
-	fi
-
-	sleep "$intervalo"
-	current=$((current + 1))
+	sleep "$intervalo" 
 done
 
 echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
