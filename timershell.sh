@@ -123,7 +123,7 @@ echo "O temporizador irá terminar às $end_time."
 
 bash -c "timer ${segundos_total}" &
 PID=$!
-intervalo="1"
+intervalo=1
 start_time=$(date +%s)
 
 while true; do
@@ -172,13 +172,12 @@ while true; do
 			-h int:value:"$((elapsed_time * 100 / segundos_total))" \
 			-h 'string:hlcolor:#ff4444' -u low \
 			-h string:x-dunst-stack-tag:temporizador \
-			--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
+			--timeout=2000 "Temporizador $mensagem..." "Faltam $temporizador"
 	fi
-
-	sleep "$intervalo"
+	sleep 1
 done
 
-echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+echo "Temmporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 
 if [[ "$OS" == "macOS" ]]; then
 	osascript -e "display notification \"Finalizado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
