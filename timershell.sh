@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v2.2.1
+#  Timershell v2.3.2
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/yoURL
 #  14/12/2024 GPL3
@@ -17,7 +17,7 @@ USAGE=$(
  / __// // __ '__ \ / _ \ / ___/\__ \ / __ \ / _ \ / // /
 / /_ / // / / / / //  __// /   ___/ // / / //  __// // /
 \__//_//_/ /_/ /_/ \___//_/   /____//_/ /_/ \___//_//_/
-v2.2.1
+v2.3.2
 EOF
 )
 echo -e "$USAGE"
@@ -69,7 +69,6 @@ tempo=${tempo:-10s}
 
 # Verificação do formato de tempo
 if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
-	# Formato hh:mm (horário específico)
 	echo "Calculando tempo até $tempo..."
 	current_time=$(date +%s)
 	IFS=: read -r hora minuto <<<"$tempo"
@@ -79,7 +78,7 @@ if [[ "$tempo" =~ ^([01]?[0-9]|2[0-3]):[0-5][0-9]$ ]]; then
 		target_time=$(date -d "$hora:$minuto" +%s)
 	fi
 	if ((target_time < current_time)); then
-		target_time=$((target_time + 86400)) # Adiciona 1 dia se o horário já passou
+		target_time=$((target_time + 86400))
 	fi
 	segundos_total=$((target_time - current_time))
 	echo "Tempo restante: $segundos_total segundos."
@@ -89,7 +88,6 @@ elif [[ "$tempo" =~ ^([0-9]+):([0-5][0-9])h$ ]]; then
 	segundos_total=$((horas * 3600 + minutos * 60))
 	echo "Iniciando temporizador de $horas horas e $minutos minutos..."
 elif [[ "$tempo" =~ ^[0-9]+[smh]$ ]]; then
-	# Formato tradicional (10s, 5m, 1h)
 	case ${tempo: -1} in
 	s) segundos_total=${tempo%?} ;;
 	m) segundos_total=$((${tempo%?} * 60)) ;;
@@ -105,26 +103,36 @@ else
 fi
 
 mensagem="${*:2}"
+
 if [[ -z "$mensagem" ]]; then
 	read -rp "Digite a mensagem para exibir ao final do temporizador: " mensagem
 fi
-#_saida "$mensagem"
 [[ -z "$mensagem" ]] && mensagem="em execução"
 
+clear
+echo "$USAGE"
 echo "Iniciando temporizador $mensagem por $segundos_total segundos..."
+
+if [[ "$OS" == "macOS" ]]; then
+	end_time=$(date -v +"$segundos_total"S +"%H:%M:%S")
+else
+	end_time=$(date -d "+$segundos_total seconds" +"%H:%M:%S")
+fi
+
+echo "O temporizador irá terminar às $end_time."
 
 bash -c "timer ${segundos_total}" &
 PID=$!
-intervalo="0.7"
-start_time=$(date +%s) # Captura o tempo inicial em segundos
+intervalo="1"
+start_time=$(date +%s)
 
 while true; do
-	current_time=$(date +%s)                          # Captura o tempo atual em segundos
-	elapsed_time=$((current_time - start_time))       # Calcula o tempo decorrido
-	tempo_restante=$((segundos_total - elapsed_time)) # Calcula o tempo restante
+	current_time=$(date +%s)
+	elapsed_time=$((current_time - start_time))
+	tempo_restante=$((segundos_total - elapsed_time))
 
 	if ((tempo_restante <= 0)); then
-		break # Sai do loop quando o tempo acabar
+		break
 	fi
 
 	# Converte o tempo restante para horas, minutos e segundos
@@ -145,8 +153,8 @@ while true; do
 		wait "$PID"
 		exit_status=$?
 		if [ "$exit_status" -ne 0 ]; then
-			echo "TimerShell $tempo interrompido, restavam: $temporizador"
-			date '+%H:%M:%S +%d-%m-%Y'
+			echo "TimerShell $tempo interrompido em $(date '+%H:%M:%S %d-%m-%Y')"
+			echo "Restavam: $temporizador"
 			if [[ "$OS" == "macOS" ]]; then
 				osascript -e "display notification \"Cancelado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
 			elif [[ "$OS" == "Linux" ]]; then
@@ -164,7 +172,7 @@ while true; do
 			-h int:value:"$((elapsed_time * 100 / segundos_total))" \
 			-h 'string:hlcolor:#ff4444' -u low \
 			-h string:x-dunst-stack-tag:temporizador \
-			--timeout=1020 "Temporizador $mensagem..." "Faltam $temporizador"
+			--timeout=1010 "Temporizador $mensagem..." "Faltam $temporizador"
 	fi
 
 	sleep "$intervalo"
@@ -174,8 +182,10 @@ echo "Temporizador $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 
 if [[ "$OS" == "macOS" ]]; then
 	osascript -e "display notification \"Finalizado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
+	sleep "$intervalo" && echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 	seq 3 | xargs -I {} afplay /System/Library/Sounds/Ping.aiff
 elif [[ "$OS" == "Linux" ]]; then
 	dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+	sleep "$intervalo" && echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 	paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
 fi
