@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v2.3.4
+#  Timershell v2.3.5
 #  Matheus Martins 3mhenrique@gmail.com
 #  https://github.com/mateuscomh/timershell
 #  14/12/2024 GPL3
