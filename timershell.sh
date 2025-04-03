@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 #----------------------------------------------------|
-#  Timershell v2.3.2
+#  Timershell v2.3.4
 #  Matheus Martins 3mhenrique@gmail.com
-#  https://github.com/mateuscomh/yoURL
+#  https://github.com/mateuscomh/timershell
 #  14/12/2024 GPL3
 #  Shell GUI timer regressivo com notificação
 #  Deps: Linux (dunstify, paplay),timer(https://github.com/caarlos0/timer)
@@ -121,9 +121,8 @@ fi
 
 echo "O temporizador irá terminar às $end_time."
 
-bash -c "timer ${segundos_total}" &
+bash -c "timer --format 24h ${segundos_total}" &
 PID=$!
-intervalo=1
 start_time=$(date +%s)
 
 while true; do
@@ -131,7 +130,7 @@ while true; do
 	elapsed_time=$((current_time - start_time))
 	tempo_restante=$((segundos_total - elapsed_time))
 
-	if ((tempo_restante <= 0)); then
+	if ((tempo_restante <= -5)); then
 		break
 	fi
 
@@ -162,6 +161,7 @@ while true; do
 			fi
 			exit 127
 		fi
+		sleep 0.5
 	fi
 
 	# Exibir notificação
@@ -172,19 +172,16 @@ while true; do
 			-h int:value:"$((elapsed_time * 100 / segundos_total))" \
 			-h 'string:hlcolor:#ff4444' -u low \
 			-h string:x-dunst-stack-tag:temporizador \
-			--timeout=2000 "Temporizador $mensagem..." "Faltam $temporizador"
+			--timeout=5000 "Temporizador $mensagem..." "Faltam $temporizador"
 	fi
-	sleep 1
 done
-
-echo "Temmporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 
 if [[ "$OS" == "macOS" ]]; then
 	osascript -e "display notification \"Finalizado às: $(date '+%H:%M:%S %d/%m/%Y')\" with title \"Temporizador de $tempo $mensagem\""
-	sleep "$intervalo" && echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+	echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 	seq 3 | xargs -I {} afplay /System/Library/Sounds/Ping.aiff
 elif [[ "$OS" == "Linux" ]]; then
 	dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
-	sleep "$intervalo" && echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+	echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 	paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
 fi
