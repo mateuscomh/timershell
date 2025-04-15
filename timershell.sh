@@ -161,7 +161,7 @@ while true; do
 			fi
 			exit 127
 		fi
-		sleep 0.7
+		sleep 0.9
 	fi
 
 	# Exibir notificação
