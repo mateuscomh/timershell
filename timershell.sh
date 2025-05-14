@@ -181,7 +181,9 @@ if [[ "$OS" == "macOS" ]]; then
 	echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 	seq 3 | xargs -I {} afplay /System/Library/Sounds/Ping.aiff
 elif [[ "$OS" == "Linux" ]]; then
+	msg="Temporizador de $tempo $mensagem finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
+	curl -s -o /dev/null -X POST -d "$msg" http://192.168.2.185/test
+	echo "$msg"
 	dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
-	echo "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
 	paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
 fi
