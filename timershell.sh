@@ -172,7 +172,7 @@ while true; do
 			-h int:value:"$((elapsed_time * 100 / segundos_total))" \
 			-h 'string:hlcolor:#ff4444' -u low \
 			-h string:x-dunst-stack-tag:temporizador \
-			--timeout=5000 "Temporizador $mensagem..." "Faltam $temporizador para $end_time"
+			--timeout=5000 "Temporizador $tempo $mensagem..." "Faltam $temporizador para $end_time"
 	fi
 done
 
