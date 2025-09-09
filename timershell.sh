@@ -185,5 +185,5 @@ elif [[ "$OS" == "Linux" ]]; then
 	curl -s -o /dev/null -X POST -d "$msg" http://192.168.2.185/test
 	echo "$msg"
 	dunstify -u critical "Temporizador de $tempo $mensagem" "finalizado às: $(date '+%H:%M:%S %d/%m/%Y')"
-	paplay /usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga
+	yes paplay /usr/share/sounds/freedesktop/stereo/window-attention.oga | head -n 5 | bash
 fi
